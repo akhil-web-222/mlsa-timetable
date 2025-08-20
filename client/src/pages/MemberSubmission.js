@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { SLOT_LABELS, DAY_LABELS, validateEmail } from '../utils/constants';
@@ -11,8 +11,53 @@ const MemberSubmission = () => {
     free_slots: []
   });
   const [loading, setLoading] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [isUpdate, setIsUpdate] = useState(false);
+
+  // Load existing data when registration number is entered and focus is lost
+  const handleRegNumberBlur = async () => {
+    const regNumber = formData.reg_number.trim();
+    if (regNumber && regNumber.length > 0) {
+      setLoadingExisting(true);
+      setMessage('');
+      
+      try {
+        console.log('Attempting to load data for:', regNumber); // Debug log
+        const response = await api.get(`/members/status/${regNumber}`);
+        const memberData = response.data;
+        
+        console.log('Loaded member data:', memberData); // Debug log
+        
+        // Pre-populate form with existing data
+        setFormData(prev => ({
+          ...prev,
+          name: memberData.name,
+          email: memberData.email,
+          free_slots: memberData.free_slots || []
+        }));
+        
+        setIsUpdate(true);
+        setMessage(`Loaded existing data for ${memberData.name}. You can now update your slots.`);
+        setMessageType('success');
+        
+      } catch (error) {
+        console.error('Error loading member data:', error); // Debug log
+        // If member not found, keep form empty for new submission
+        if (error.response?.status === 404) {
+          setMessage('New submission - please fill in your details.');
+          setMessageType('info');
+          setIsUpdate(false);
+        } else {
+          setMessage('Error loading existing data. Please try again.');
+          setMessageType('error');
+        }
+      } finally {
+        setLoadingExisting(false);
+      }
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -85,16 +130,21 @@ const MemberSubmission = () => {
     
     try {
       const response = await api.post('/members/submit', formData);
-      setMessage('Timetable submitted successfully!');
+      const successMessage = isUpdate 
+        ? 'Timetable updated successfully!' 
+        : 'Timetable submitted successfully!';
+      setMessage(successMessage);
       setMessageType('success');
       
-      // Reset form
-      setFormData({
-        name: '',
-        reg_number: '',
-        email: '',
-        free_slots: []
-      });
+      // Don't reset form on update to allow further modifications
+      if (!isUpdate) {
+        setFormData({
+          name: '',
+          reg_number: '',
+          email: '',
+          free_slots: []
+        });
+      }
       
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Failed to submit timetable';
@@ -118,11 +168,29 @@ const MemberSubmission = () => {
       </div>
 
       <div className="card">
-        <h2>Submit Your Free Slots</h2>
-        <p>Please fill in your details and select all the time slots when you are available.</p>
+        <h2>{isUpdate ? 'Update Your Free Slots' : 'Submit Your Free Slots'}</h2>
+        <p>
+          {isUpdate 
+            ? 'You can modify your existing selections below and submit the changes.'
+            : 'Please fill in your details and select all the time slots when you are available.'
+          }
+        </p>
+        
+        {isUpdate && (
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#d1ecf1', 
+            border: '1px solid #bee5eb', 
+            borderRadius: '4px',
+            marginBottom: '16px',
+            color: '#0c5460'
+          }}>
+            <strong>ℹ️ Update Mode:</strong> Your existing data has been loaded. Modify as needed and click "Update Timetable".
+          </div>
+        )}
         
         {message && (
-          <div className={`alert alert-${messageType === 'error' ? 'error' : 'success'}`}>
+          <div className={`alert alert-${messageType === 'error' ? 'error' : messageType === 'info' ? 'warning' : 'success'}`}>
             {message}
           </div>
         )}
@@ -150,9 +218,25 @@ const MemberSubmission = () => {
                 name="reg_number"
                 value={formData.reg_number}
                 onChange={handleInputChange}
+                onBlur={handleRegNumberBlur}
                 placeholder="e.g., RA2111003010XXX"
                 required
+                disabled={loadingExisting}
               />
+              {loadingExisting && (
+                <small style={{ color: '#007bff' }}>Loading existing data...</small>
+              )}
+              {formData.reg_number.trim() && !isUpdate && (
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-small"
+                  onClick={handleRegNumberBlur}
+                  disabled={loadingExisting}
+                  style={{ marginTop: '8px' }}
+                >
+                  {loadingExisting ? 'Loading...' : 'Load Existing Data'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -206,10 +290,33 @@ const MemberSubmission = () => {
             <button 
               type="submit" 
               className="btn"
-              disabled={loading}
+              disabled={loading || loadingExisting}
             >
-              {loading ? 'Submitting...' : 'Submit Timetable'}
+              {loading 
+                ? (isUpdate ? 'Updating...' : 'Submitting...') 
+                : (isUpdate ? 'Update Timetable' : 'Submit Timetable')
+              }
             </button>
+            
+            {isUpdate && (
+              <button 
+                type="button" 
+                className="btn btn-secondary"
+                onClick={() => {
+                  setFormData({
+                    name: '',
+                    reg_number: '',
+                    email: '',
+                    free_slots: []
+                  });
+                  setIsUpdate(false);
+                  setMessage('');
+                }}
+                style={{ marginLeft: '12px' }}
+              >
+                Reset Form
+              </button>
+            )}
           </div>
         </form>
 
