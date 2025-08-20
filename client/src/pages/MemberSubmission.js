@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import { SLOT_LABELS, DAY_LABELS, validateEmail } from '../utils/constants';
 
 const MemberSubmission = () => {
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     name: '',
     reg_number: '',
@@ -16,46 +17,62 @@ const MemberSubmission = () => {
   const [messageType, setMessageType] = useState('');
   const [isUpdate, setIsUpdate] = useState(false);
 
+  // Auto-load data when coming from status page with reg parameter
+  useEffect(() => {
+    const regParam = searchParams.get('reg');
+    if (regParam) {
+      setFormData(prev => ({ ...prev, reg_number: regParam }));
+      // Automatically load the data
+      loadMemberData(regParam);
+    }
+  }, [searchParams]);
+
+  // Function to load member data
+  const loadMemberData = async (regNumber) => {
+    if (!regNumber?.trim()) return;
+    
+    setLoadingExisting(true);
+    setMessage('');
+    
+    try {
+      console.log('Attempting to load data for:', regNumber);
+      const response = await api.get(`/members/status/${regNumber}`);
+      const memberData = response.data;
+      
+      console.log('Loaded member data:', memberData);
+      
+      // Pre-populate form with existing data
+      setFormData(prev => ({
+        ...prev,
+        name: memberData.name,
+        email: memberData.email,
+        free_slots: memberData.free_slots || []
+      }));
+      
+      setIsUpdate(true);
+      setMessage(`Loaded existing data for ${memberData.name}. You can now update your slots.`);
+      setMessageType('success');
+      
+    } catch (error) {
+      console.error('Error loading member data:', error);
+      if (error.response?.status === 404) {
+        setMessage('New submission - please fill in your details.');
+        setMessageType('info');
+        setIsUpdate(false);
+      } else {
+        setMessage('Error loading existing data. Please try again.');
+        setMessageType('error');
+      }
+    } finally {
+      setLoadingExisting(false);
+    }
+  };
+
   // Load existing data when registration number is entered and focus is lost
   const handleRegNumberBlur = async () => {
     const regNumber = formData.reg_number.trim();
     if (regNumber && regNumber.length > 0) {
-      setLoadingExisting(true);
-      setMessage('');
-      
-      try {
-        console.log('Attempting to load data for:', regNumber); // Debug log
-        const response = await api.get(`/members/status/${regNumber}`);
-        const memberData = response.data;
-        
-        console.log('Loaded member data:', memberData); // Debug log
-        
-        // Pre-populate form with existing data
-        setFormData(prev => ({
-          ...prev,
-          name: memberData.name,
-          email: memberData.email,
-          free_slots: memberData.free_slots || []
-        }));
-        
-        setIsUpdate(true);
-        setMessage(`Loaded existing data for ${memberData.name}. You can now update your slots.`);
-        setMessageType('success');
-        
-      } catch (error) {
-        console.error('Error loading member data:', error); // Debug log
-        // If member not found, keep form empty for new submission
-        if (error.response?.status === 404) {
-          setMessage('New submission - please fill in your details.');
-          setMessageType('info');
-          setIsUpdate(false);
-        } else {
-          setMessage('Error loading existing data. Please try again.');
-          setMessageType('error');
-        }
-      } finally {
-        setLoadingExisting(false);
-      }
+      await loadMemberData(regNumber);
     }
   };
 
@@ -225,17 +242,6 @@ const MemberSubmission = () => {
               />
               {loadingExisting && (
                 <small style={{ color: '#007bff' }}>Loading existing data...</small>
-              )}
-              {formData.reg_number.trim() && !isUpdate && (
-                <button 
-                  type="button" 
-                  className="btn btn-secondary btn-small"
-                  onClick={handleRegNumberBlur}
-                  disabled={loadingExisting}
-                  style={{ marginTop: '8px' }}
-                >
-                  {loadingExisting ? 'Loading...' : 'Load Existing Data'}
-                </button>
               )}
             </div>
           </div>

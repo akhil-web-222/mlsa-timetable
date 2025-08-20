@@ -168,7 +168,12 @@ const MemberStatus = () => {
             {!member.locked && (
               <div className="alert alert-success">
                 <strong>Submission Open:</strong> You can still make changes to your timetable. 
-                <Link to="/" style={{ marginLeft: '8px' }}>Update Timetable</Link>
+                <Link 
+                  to={`/?reg=${encodeURIComponent(member.reg_number)}`} 
+                  style={{ marginLeft: '8px' }}
+                >
+                  Update Timetable
+                </Link>
               </div>
             )}
           </div>
