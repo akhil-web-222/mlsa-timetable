@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import { SLOT_LABELS, DAY_LABELS, formatDate } from '../utils/constants';
 
 const MemberStatus = () => {
+  const [searchParams] = useSearchParams();
   const [regNumber, setRegNumber] = useState('');
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  // Auto-search if reg parameter is provided
+  useEffect(() => {
+    const regParam = searchParams.get('reg');
+    if (regParam) {
+      setRegNumber(regParam);
+      handleSearch(null, regParam);
+    }
+  }, [searchParams]);
+
+  const handleSearch = async (e, regParam = null) => {
+    if (e) e.preventDefault();
     
-    if (!regNumber.trim()) {
+    const searchRegNumber = regParam || regNumber.trim();
+    if (!searchRegNumber) {
       setError('Please enter a registration number');
       return;
     }
@@ -22,7 +33,7 @@ const MemberStatus = () => {
     setMember(null);
     
     try {
-      const response = await api.get(`/members/status/${regNumber.trim()}`);
+      const response = await api.get(`/members/status/${searchRegNumber}`);
       setMember(response.data);
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Failed to fetch status';

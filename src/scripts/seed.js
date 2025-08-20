@@ -9,7 +9,7 @@ const seedAdmin = async () => {
     await connectDB();
     
     const username = process.env.ADMIN_SEED_USERNAME || 'admin';
-    const password = process.env.ADMIN_SEED_PASSWORD || 'StrongPass#123';
+    const password = process.env.ADMIN_SEED_PASSWORD || 'StrongPass';
     
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ username });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import MemberDetails from './pages/MemberDetails';
 import MemberSubmission from './pages/MemberSubmission';
 import MemberStatus from './pages/MemberStatus';
 import AdminLogin from './pages/AdminLogin';
@@ -15,7 +16,8 @@ function App() {
       <div className="App">
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<MemberSubmission />} />
+          <Route path="/" element={<MemberDetails />} />
+          <Route path="/submit" element={<MemberSubmission />} />
           <Route path="/status" element={<MemberStatus />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           

@@ -17,13 +17,28 @@ const MemberSubmission = () => {
   const [messageType, setMessageType] = useState('');
   const [isUpdate, setIsUpdate] = useState(false);
 
-  // Auto-load data when coming from status page with reg parameter
+  // Auto-load data when coming from status page with reg parameter or initial details
   useEffect(() => {
     const regParam = searchParams.get('reg');
+    const nameParam = searchParams.get('name');
+    const emailParam = searchParams.get('email');
+    
     if (regParam) {
-      setFormData(prev => ({ ...prev, reg_number: regParam }));
-      // Automatically load the data
-      loadMemberData(regParam);
+      setFormData(prev => ({ 
+        ...prev, 
+        reg_number: regParam,
+        name: nameParam || prev.name,
+        email: emailParam || prev.email
+      }));
+      
+      // If coming from status page (has reg but no name/email), load existing data
+      if (!nameParam && !emailParam) {
+        loadMemberData(regParam);
+      } else {
+        // Coming from initial form with new member details
+        setMessage('Please select your free slots below.');
+        setMessageType('info');
+      }
     }
   }, [searchParams]);
 

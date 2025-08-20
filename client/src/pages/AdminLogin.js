@@ -107,16 +107,16 @@ const AdminLogin = () => {
             </button>
           </form>
 
-          <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+          {/* <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
             <h4>Default Credentials:</h4>
             <p style={{ margin: '8px 0', fontSize: '14px' }}>
               <strong>Username:</strong> admin<br/>
-              <strong>Password:</strong> StrongPass#123
+              <strong>Password:</strong> StrongPass
             </p>
             <small style={{ color: '#666' }}>
               Please change the default password after first login
             </small>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
