@@ -284,24 +284,33 @@ const MemberSubmission = () => {
               {DAY_LABELS.map((dayLabel, dayIndex) => (
                 <div key={dayIndex} className="day-column">
                   <div className="day-title">{dayLabel}</div>
-                  {SLOT_LABELS.map((slotLabel, slotIndex) => (
-                    <div key={slotIndex} className="slot-checkbox">
-                      <input
-                        type="checkbox"
-                        id={`slot-${dayIndex + 1}-${slotIndex + 1}`}
-                        checked={isSlotSelected(dayIndex + 1, slotIndex + 1)}
-                        onChange={(e) => handleSlotChange(
+                  {SLOT_LABELS.map((slotLabel, slotIndex) => {
+                    const isSelected = isSlotSelected(dayIndex + 1, slotIndex + 1);
+                    return (
+                      <div 
+                        key={slotIndex} 
+                        className={`slot-checkbox ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleSlotChange(
                           dayIndex + 1, 
                           slotIndex + 1, 
-                          e.target.checked
+                          !isSelected
                         )}
-                      />
-                      <label htmlFor={`slot-${dayIndex + 1}-${slotIndex + 1}`}>
-                        Slot {slotIndex + 1}<br/>
-                        <small>{slotLabel}</small>
-                      </label>
-                    </div>
-                  ))}
+                      >
+                        <input
+                          type="checkbox"
+                          id={`slot-${dayIndex + 1}-${slotIndex + 1}`}
+                          checked={isSelected}
+                          onChange={() => {}} // Handled by div onClick
+                          onClick={(e) => e.stopPropagation()} // Prevent double toggle
+                        />
+                        <label htmlFor={`slot-${dayIndex + 1}-${slotIndex + 1}`}>
+                          Slot {slotIndex + 1}<br/>
+                          <small>{slotLabel}</small>
+                          {isSelected && <span style={{ color: '#28a745', fontSize: '12px' }}> ✓</span>}
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>

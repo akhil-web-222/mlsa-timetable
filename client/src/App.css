@@ -223,25 +223,46 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background: white;
 }
 
 .slot-checkbox:hover {
-  background-color: #f8f9fa;
+  border-color: #28a745;
+  background-color: #f8fff9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+}
+
+.slot-checkbox.selected {
+  border-color: #28a745;
+  background-color: #d4edda;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
 }
 
 .slot-checkbox input {
-  width: auto;
-  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+  cursor: pointer;
+  accent-color: #28a745;
 }
 
 .slot-checkbox label {
   margin: 0;
-  font-weight: normal;
+  font-weight: 500;
   cursor: pointer;
   flex: 1;
+  user-select: none;
+}
+
+.slot-checkbox.selected label {
+  color: #155724;
+  font-weight: 600;
 }
 
 /* Tables */
