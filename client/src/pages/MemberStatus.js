@@ -61,14 +61,14 @@ const MemberStatus = () => {
                   key={slotIndex} 
                   className={`slot-checkbox ${isSelected ? 'selected' : ''}`}
                   style={{
-                    backgroundColor: isSelected ? '#d4edda' : '#f8f9fa',
-                    border: isSelected ? '2px solid #28a745' : '1px solid #dee2e6'
+                    backgroundColor: isSelected ? '#e6f3ff' : '#f8f9fa',
+                    border: isSelected ? '2px solid #007acc' : '1px solid #dee2e6'
                   }}
                 >
                   <span style={{ fontWeight: isSelected ? '600' : 'normal' }}>
                     Slot {slotIndex + 1}<br/>
                     <small>{slotLabel}</small>
-                    {isSelected && <span style={{ color: '#28a745', marginLeft: '8px' }}>✓</span>}
+                    {isSelected && <span style={{ color: '#007acc', marginLeft: '8px' }}>✓</span>}
                   </span>
                 </div>
               );
@@ -86,7 +86,7 @@ const MemberStatus = () => {
           <h1 className="navbar-brand">MLSA Timetable System</h1>
           <nav className="navbar-nav">
             <Link to="/">Submit Timetable</Link>
-            <Link to="/admin/login">Admin</Link>
+            {/* <Link to="/admin/login">Admin</Link> */}
           </nav>
         </div>
       </div>

@@ -4,6 +4,20 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* MLSA Color Palette - matching the logo */
+  --mlsa-primary: #007acc;       /* Microsoft Blue */
+  --mlsa-secondary: #5c2d91;     /* Microsoft Purple */
+  --mlsa-gradient: linear-gradient(135deg, #007acc 0%, #5c2d91 100%);
+  --mlsa-light: #e6f3ff;         /* Light blue background */
+  --mlsa-dark: #003d66;          /* Dark blue text */
+  --mlsa-border: #b3d9ff;        /* Light blue border */
+  --mlsa-hover: #0056b3;         /* Darker blue for hover */
+  --mlsa-success-bg: #e6f3ff;    /* Light blue success background */
+  --mlsa-success-border: #b3d9ff; /* Light blue success border */
+  --mlsa-success-text: #003d66;  /* Dark blue success text */
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -78,28 +92,30 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: var(--mlsa-primary);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.25);
 }
 
 /* Buttons */
 .btn {
   display: inline-block;
   padding: 12px 24px;
-  background-color: #007bff;
+  background: var(--mlsa-gradient);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
   margin: 4px;
 }
 
 .btn:hover {
-  background-color: #0056b3;
+  background: var(--mlsa-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
 }
 
 .btn:disabled {
@@ -124,11 +140,11 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-success {
-  background-color: #28a745;
+  background: var(--mlsa-primary);
 }
 
 .btn-success:hover {
-  background-color: #218838;
+  background: var(--mlsa-hover);
 }
 
 .btn-small {
@@ -143,10 +159,18 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 16px;
 }
 
-.alert-success {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
+/* Messages */
+.message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.message.success {
+  background-color: var(--mlsa-success-bg);
+  border: 1px solid var(--mlsa-success-border);
+  color: var(--mlsa-success-text);
 }
 
 .alert-error {
@@ -213,10 +237,13 @@ input:focus, select:focus, textarea:focus {
 }
 
 .day-title {
+  background: var(--mlsa-gradient);
+  color: white;
+  padding: 10px;
   font-weight: 600;
   margin-bottom: 12px;
   text-align: center;
-  color: #007bff;
+  border-radius: 8px;
 }
 
 .slot-checkbox {
@@ -232,16 +259,16 @@ input:focus, select:focus, textarea:focus {
 }
 
 .slot-checkbox:hover {
-  border-color: #28a745;
-  background-color: #f8fff9;
+  border-color: var(--mlsa-primary);
+  background-color: var(--mlsa-light);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 122, 204, 0.1);
 }
 
 .slot-checkbox.selected {
-  border-color: #28a745;
-  background-color: #d4edda;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+  border-color: var(--mlsa-primary);
+  background-color: var(--mlsa-success-bg);
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.2);
 }
 
 .slot-checkbox input {
@@ -249,7 +276,7 @@ input:focus, select:focus, textarea:focus {
   height: 18px;
   margin-right: 12px;
   cursor: pointer;
-  accent-color: #28a745;
+  accent-color: var(--mlsa-primary);
 }
 
 .slot-checkbox label {
@@ -261,7 +288,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .slot-checkbox.selected label {
-  color: #155724;
+  color: var(--mlsa-dark);
   font-weight: 600;
 }
 
@@ -291,10 +318,11 @@ input:focus, select:focus, textarea:focus {
 
 /* Navigation */
 .navbar {
-  background-color: #007bff;
+  background: var(--mlsa-gradient);
   color: white;
   padding: 16px 0;
   margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 122, 204, 0.15);
 }
 
 .navbar .container {
@@ -308,6 +336,14 @@ input:focus, select:focus, textarea:focus {
   font-weight: 600;
   color: white;
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+  transform: translateY(-1px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .navbar-nav {
@@ -320,12 +356,15 @@ input:focus, select:focus, textarea:focus {
   color: white;
   text-decoration: none;
   padding: 8px 16px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .navbar-nav a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Status badges */
@@ -339,7 +378,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .badge-success {
-  background-color: #28a745;
+  background: var(--mlsa-primary);
   color: white;
 }
 
@@ -476,16 +515,19 @@ input:focus, select:focus, textarea:focus {
   margin: 0 auto 30px;
   width: 80px;
   height: 80px;
-  background: #d4edda;
+  background: var(--mlsa-light);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid #28a745;
+  border: 3px solid var(--mlsa-primary);
 }
 
 .success-title {
-  color: #155724;
+  background: var(--mlsa-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 20px;
@@ -493,19 +535,19 @@ input:focus, select:focus, textarea:focus {
 }
 
 .success-message {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
+  background: var(--mlsa-success-bg);
+  border: 1px solid var(--mlsa-success-border);
   border-radius: 12px;
   padding: 25px;
   margin-bottom: 30px;
-  color: #155724;
+  color: var(--mlsa-success-text);
 }
 
 .member-greeting {
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 15px;
-  color: #28a745;
+  color: var(--mlsa-primary);
 }
 
 .success-message p {
@@ -534,14 +576,14 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-primary {
-  background: #28a745;
+  background: var(--mlsa-gradient);
   color: white;
 }
 
 .btn-primary:hover {
-  background: #218838;
+  background: var(--mlsa-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 122, 204, 0.3);
 }
 
 .btn-secondary {
@@ -588,7 +630,7 @@ input:focus, select:focus, textarea:focus {
   content: "✓";
   position: absolute;
   left: 0;
-  color: #28a745;
+  color: var(--mlsa-primary);
   font-weight: bold;
 }
 

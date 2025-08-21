@@ -19,7 +19,7 @@ function ThankYou() {
               height="64" 
               viewBox="0 0 24 24" 
               fill="none" 
-              stroke="#28a745" 
+              stroke="#007acc" 
               strokeWidth="2" 
               strokeLinecap="round" 
               strokeLinejoin="round"

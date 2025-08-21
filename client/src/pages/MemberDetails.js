@@ -98,9 +98,9 @@ const MemberDetails = () => {
       <div className="navbar">
         <div className="container">
           <h1 className="navbar-brand">MLSA Timetable System</h1>
-          <nav className="navbar-nav">
+          {/* <nav className="navbar-nav">
             <Link to="/admin/login">Admin</Link>
-          </nav>
+          </nav> */}
         </div>
       </div>
 

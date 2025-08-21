@@ -187,7 +187,7 @@ const MemberSubmission = () => {
           <h1 className="navbar-brand">MLSA Timetable System</h1>
           <nav className="navbar-nav">
             <Link to="/status">Check Status</Link>
-            <Link to="/admin/login">Admin</Link>
+            {/* <Link to="/admin/login">Admin</Link> */}
           </nav>
         </div>
       </div>
