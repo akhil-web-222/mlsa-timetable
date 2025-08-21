@@ -106,6 +106,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteMember = async (memberId, memberName, regNumber) => {
+    if (window.confirm(`Are you sure you want to PERMANENTLY DELETE ${memberName} (${regNumber})? This action cannot be undone and will remove all their data from the system.`)) {
+      try {
+        await api.delete(`/admin/members/${memberId}`);
+        showMessage('Member deleted successfully', 'success');
+        fetchMembers();
+        // Also refresh stats if we're on overview tab
+        if (activeTab === 'overview') {
+          fetchStats();
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        showMessage('Failed to delete member', 'error');
+      }
+    }
+  };
+
   const handleExport = async (format, scope = 'all', day = null) => {
     try {
       const params = { scope };
@@ -346,6 +363,13 @@ const AdminDashboard = () => {
                           onClick={() => handleResetMember(member._id, member.name)}
                         >
                           Reset
+                        </button>
+                        <button
+                          className="btn btn-small"
+                          style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid #dc3545' }}
+                          onClick={() => handleDeleteMember(member._id, member.name, member.reg_number)}
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>

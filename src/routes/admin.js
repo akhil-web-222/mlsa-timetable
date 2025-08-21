@@ -168,6 +168,16 @@ router.delete('/members/:id', authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Member not found' });
     }
 
+    // Add audit log before deletion
+    member.audit.push({
+      action: 'DELETE',
+      by: 'admin',
+      meta: { admin_username: req.admin.username }
+    });
+    
+    await member.save();
+    
+    // Now delete the member
     await Member.findByIdAndDelete(req.params.id);
 
     res.json({ 
