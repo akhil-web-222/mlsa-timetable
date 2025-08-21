@@ -2,12 +2,9 @@ require('dotenv').config();
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const Admin = require('../models/Admin');
-const connectDB = require('../utils/database');
 
 const seedAdmin = async () => {
   try {
-    await connectDB();
-    
     const username = process.env.ADMIN_SEED_USERNAME || 'admin';
     const password = process.env.ADMIN_SEED_PASSWORD || 'StrongPass';
     
@@ -15,7 +12,7 @@ const seedAdmin = async () => {
     const existingAdmin = await Admin.findOne({ username });
     if (existingAdmin) {
       console.log('Admin user already exists');
-      process.exit(0);
+      return;
     }
     
     // Hash password
@@ -36,9 +33,26 @@ const seedAdmin = async () => {
     
   } catch (error) {
     console.error('Error seeding admin:', error);
-  } finally {
-    process.exit(0);
+    throw error;
   }
 };
 
-seedAdmin();
+// If this file is run directly, execute the seeding
+if (require.main === module) {
+  const connectDB = require('../utils/database');
+  
+  const runSeeding = async () => {
+    try {
+      await connectDB();
+      await seedAdmin();
+    } catch (error) {
+      console.error('Seeding failed:', error);
+    } finally {
+      process.exit(0);
+    }
+  };
+  
+  runSeeding();
+}
+
+module.exports = seedAdmin;

@@ -6,14 +6,29 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const connectDB = require('./utils/database');
+const seedAdmin = require('./scripts/seed');
 
 const app = express();
 app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 8080;
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and seed admin
+const initializeApp = async () => {
+  try {
+    await connectDB();
+    console.log('Database connected successfully');
+    
+    // Auto-seed admin user
+    await seedAdmin();
+    
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    process.exit(1);
+  }
+};
+
+initializeApp();
 
 // Security middleware
 app.use(helmet({
