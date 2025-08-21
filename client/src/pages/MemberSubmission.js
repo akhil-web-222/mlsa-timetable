@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { SLOT_LABELS, DAY_LABELS, validateEmail } from '../utils/constants';
 
 const MemberSubmission = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     reg_number: '',
@@ -162,27 +163,19 @@ const MemberSubmission = () => {
     
     try {
       const response = await api.post('/members/submit', formData);
-      const successMessage = isUpdate 
-        ? 'Timetable updated successfully!' 
-        : 'Timetable submitted successfully!';
-      setMessage(successMessage);
-      setMessageType('success');
       
-      // Don't reset form on update to allow further modifications
-      if (!isUpdate) {
-        setFormData({
-          name: '',
-          reg_number: '',
-          email: '',
-          free_slots: []
-        });
-      }
+      // Navigate to thank you page with member details
+      navigate('/thank-you', {
+        state: {
+          isUpdate: isUpdate,
+          memberName: formData.name
+        }
+      });
       
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Failed to submit timetable';
       setMessage(errorMessage);
       setMessageType('error');
-    } finally {
       setLoading(false);
     }
   };

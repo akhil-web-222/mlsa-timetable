@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MemberDetails from './pages/MemberDetails';
 import MemberSubmission from './pages/MemberSubmission';
 import MemberStatus from './pages/MemberStatus';
+import ThankYou from './pages/ThankYou';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import useAuthStore from './store/authStore';
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<MemberDetails />} />
           <Route path="/submit" element={<MemberSubmission />} />
           <Route path="/status" element={<MemberStatus />} />
+          <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           
           {/* Protected admin routes */}
