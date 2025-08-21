@@ -180,7 +180,7 @@ const MemberStatus = () => {
               <div className="alert alert-success">
                 <strong>Submission Open:</strong> You can still make changes to your timetable. 
                 <Link 
-                  to={`/?reg=${encodeURIComponent(member.reg_number)}`} 
+                  to={`/submit?reg=${encodeURIComponent(member.reg_number)}`} 
                   style={{ marginLeft: '8px' }}
                 >
                   Update Timetable
