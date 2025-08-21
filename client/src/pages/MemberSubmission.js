@@ -343,7 +343,7 @@ const MemberSubmission = () => {
           </div>
         </form>
 
-        <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+        {/* <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
           <h4>Important Notes:</h4>
           <ul style={{ marginLeft: '20px', marginTop: '8px' }}>
             <li>You can resubmit your timetable multiple times before it gets locked</li>
@@ -351,7 +351,7 @@ const MemberSubmission = () => {
             <li>Select all slots where you are completely free</li>
             <li>Once submitted, contact admin if you need to make changes</li>
           </ul>
-        </div>
+        </div> */}
       </div>
     </div>
   );
