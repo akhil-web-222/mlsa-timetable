@@ -5,7 +5,6 @@ const Member = require('../models/Member');
 const { generateTokens, setTokenCookies, clearTokenCookies } = require('../utils/jwt');
 const { authenticateAdmin } = require('../middleware/auth');
 const { adminLoginSchema, adminMembersQuerySchema, exportQuerySchema } = require('../utils/validation');
-const ExcelJS = require('exceljs');
 const csv = require('fast-csv');
 const { SLOT_LABELS, DAY_LABELS } = require('../utils/constants');
 const router = express.Router();
@@ -186,87 +185,39 @@ router.delete('/members/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Export data as Excel
-router.get('/export/excel', authenticateAdmin, async (req, res) => {
+// Reset member's free slots
+router.patch('/members/:id/reset', authenticateAdmin, async (req, res) => {
   try {
-    const { error, value } = exportQuerySchema.validate(req.query);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+    const member = await Member.findById(req.params.id);
+    
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found' });
     }
 
-    const { scope, day } = value;
-    const members = await Member.find({}).select('-audit');
+    // Clear all free slots
+    member.free_slots = [];
+    member.locked = false;
+    member.last_updated = new Date();
+    member.audit.push({
+      action: 'RESET',
+      by: 'admin',
+      meta: { admin_username: req.admin.username }
+    });
+    
+    await member.save();
 
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'MLSA Timetable System';
-
-    if (scope === 'all') {
-      // Create summary sheet
-      const summarySheet = workbook.addWorksheet('Summary');
-      
-      // Headers
-      summarySheet.addRow(['Name', 'Registration', 'Email', 'Free Slots Count', 'Locked', 'Last Updated']);
-      
-      members.forEach(member => {
-        summarySheet.addRow([
-          member.name,
-          member.reg_number,
-          member.email,
-          member.free_slots.length,
-          member.locked ? 'Yes' : 'No',
-          member.last_updated.toISOString()
-        ]);
-      });
-
-      // Create sheets for each day
-      for (let d = 1; d <= 5; d++) {
-        const daySheet = workbook.addWorksheet(`Day ${d}`);
-        
-        // Create slot availability matrix
-        const slotHeaders = ['Name', 'Registration', ...SLOT_LABELS];
-        daySheet.addRow(slotHeaders);
-        
-        members.forEach(member => {
-          const row = [member.name, member.reg_number];
-          
-          for (let s = 1; s <= 10; s++) {
-            const hasSlot = member.free_slots.some(slot => slot.day === d && slot.slot === s);
-            row.push(hasSlot ? 'FREE' : '');
-          }
-          
-          daySheet.addRow(row);
-        });
+    res.json({ 
+      message: 'Member data reset successfully',
+      member: {
+        id: member._id,
+        name: member.name,
+        free_slots: member.free_slots,
+        locked: member.locked
       }
-    } else {
-      // Single day export
-      const daySheet = workbook.addWorksheet(`Day ${day}`);
-      const slotHeaders = ['Name', 'Registration', 'Email', ...SLOT_LABELS];
-      daySheet.addRow(slotHeaders);
-      
-      members.forEach(member => {
-        const row = [member.name, member.reg_number, member.email];
-        
-        for (let s = 1; s <= 10; s++) {
-          const hasSlot = member.free_slots.some(slot => slot.day === day && slot.slot === s);
-          row.push(hasSlot ? 'FREE' : '');
-        }
-        
-        daySheet.addRow(row);
-      });
-    }
-
-    const filename = scope === 'all' 
-      ? `timetable_export_${new Date().toISOString().split('T')[0]}.xlsx`
-      : `timetable_day${day}_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    await workbook.xlsx.write(res);
-    res.end();
+    });
 
   } catch (error) {
-    console.error('Export excel error:', error);
+    console.error('Reset member error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

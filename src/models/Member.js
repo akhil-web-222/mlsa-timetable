@@ -7,7 +7,7 @@ const SlotSchema = new mongoose.Schema({
 
 const AuditSchema = new mongoose.Schema({
   at: { type: Date, default: Date.now },
-  action: { type: String, enum: ['SUBMIT', 'UNLOCK', 'RESUBMIT'], required: true },
+  action: { type: String, enum: ['SUBMIT', 'UNLOCK', 'RESUBMIT', 'RESET'], required: true },
   by: { type: String, enum: ['member', 'admin'], required: true },
   meta: { type: mongoose.Schema.Types.Mixed }
 }, { _id: false });

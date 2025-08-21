@@ -93,6 +93,19 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResetMember = async (memberId, memberName) => {
+    if (window.confirm(`Are you sure you want to reset all data for ${memberName}? This will clear all their selected time slots and unlock their submission.`)) {
+      try {
+        await api.patch(`/admin/members/${memberId}/reset`);
+        showMessage('Member data reset successfully', 'success');
+        fetchMembers();
+      } catch (error) {
+        console.error('Reset error:', error);
+        showMessage('Failed to reset member data', 'error');
+      }
+    }
+  };
+
   const handleExport = async (format, scope = 'all', day = null) => {
     try {
       const params = { scope };
@@ -174,12 +187,6 @@ const AdminDashboard = () => {
             <h5>Complete Export</h5>
             <button 
               className="btn btn-small"
-              onClick={() => handleExport('excel')}
-            >
-              Download Excel
-            </button>
-            <button 
-              className="btn btn-small btn-secondary"
               onClick={() => handleExport('csv')}
             >
               Download CSV
@@ -193,12 +200,6 @@ const AdminDashboard = () => {
                 <span style={{ marginRight: '8px' }}>{label}:</span>
                 <button 
                   className="btn btn-small"
-                  onClick={() => handleExport('excel', 'day', index + 1)}
-                >
-                  Excel
-                </button>
-                <button 
-                  className="btn btn-small btn-secondary"
                   onClick={() => handleExport('csv', 'day', index + 1)}
                 >
                   CSV
@@ -331,14 +332,22 @@ const AdminDashboard = () => {
                     </td>
                     <td>{formatDate(member.last_updated)}</td>
                     <td>
-                      {member.locked && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {member.locked && (
+                          <button
+                            className="btn btn-small btn-warning"
+                            onClick={() => handleUnlockMember(member._id)}
+                          >
+                            Unlock
+                          </button>
+                        )}
                         <button
-                          className="btn btn-small btn-warning"
-                          onClick={() => handleUnlockMember(member._id)}
+                          className="btn btn-small btn-danger"
+                          onClick={() => handleResetMember(member._id, member.name)}
                         >
-                          Unlock
+                          Reset
                         </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
