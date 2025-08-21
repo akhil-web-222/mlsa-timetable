@@ -8,6 +8,8 @@ const path = require('path');
 const connectDB = require('./utils/database');
 
 const app = express();
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 8080;
 
 // Connect to MongoDB
