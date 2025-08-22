@@ -25,6 +25,8 @@ const AdminDashboard = () => {
   const [messageType, setMessageType] = useState('');
   const [publicityCapacities, setPublicityCapacities] = useState([]);
   const [publicityStats, setPublicityStats] = useState({});
+  const [bulkCapacityC2C, setBulkCapacityC2C] = useState(5);
+  const [bulkCapacityHelpdesk, setBulkCapacityHelpdesk] = useState(5);
 
   const navigate = useNavigate();
   const { admin, logout } = useAuthStore();
@@ -106,6 +108,32 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Failed to update capacity:', error);
       showMessage('Failed to update capacity', 'error');
+    }
+  };
+
+  const updateAllCapacities = async (dutyType, newCapacity) => {
+    if (!newCapacity || newCapacity < 1 || newCapacity > 50) {
+      showMessage('Capacity must be between 1 and 50', 'error');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Use the new bulk update endpoint
+      const response = await api.put('/publicity/admin/capacity/bulk', {
+        duty_type: dutyType,
+        capacity: newCapacity
+      });
+      
+      showMessage(response.data.message, 'success');
+      fetchPublicityData(); // Refresh data
+    } catch (error) {
+      console.error('Failed to update all capacities:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to update all capacities';
+      showMessage(errorMessage, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -488,6 +516,145 @@ const AdminDashboard = () => {
               • <strong>Capacity:</strong> Maximum number of students allowed (click to edit)<br/>
               • Default capacity is 5 per duty type per slot
             </p>
+
+            {/* Bulk Capacity Update Controls */}
+            <div style={{ 
+              marginBottom: '24px', 
+              padding: '16px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '8px',
+              border: '1px solid #dee2e6'
+            }}>
+              <h5 style={{ marginBottom: '16px', color: '#495057' }}>
+                🚀 Bulk Capacity Update
+              </h5>
+              <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
+                Change all slot capacities at once instead of editing each one individually.
+              </p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                {/* C2C Bulk Update */}
+                <div style={{ 
+                  padding: '12px', 
+                  backgroundColor: '#e8f5e8', 
+                  borderRadius: '6px',
+                  border: '1px solid #d1e7dd'
+                }}>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    fontWeight: 'bold', 
+                    color: '#28a745',
+                    marginBottom: '8px',
+                    textAlign: 'center'
+                  }}>
+                    🟢 Update All C2C Capacities
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={bulkCapacityC2C}
+                      onChange={(e) => setBulkCapacityC2C(parseInt(e.target.value) || 1)}
+                      style={{ 
+                        width: '70px',
+                        height: '36px',
+                        border: '2px solid #28a745',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        backgroundColor: 'white'
+                      }}
+                    />
+                    <button
+                      onClick={() => updateAllCapacities('C2C', bulkCapacityC2C)}
+                      disabled={loading}
+                      style={{
+                        flex: 1,
+                        height: '36px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        opacity: loading ? 0.6 : 1
+                      }}
+                    >
+                      {loading ? 'Updating...' : 'Update All C2C'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Helpdesk Bulk Update */}
+                <div style={{ 
+                  padding: '12px', 
+                  backgroundColor: '#e1f7fe', 
+                  borderRadius: '6px',
+                  border: '1px solid #b8daff'
+                }}>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    fontWeight: 'bold', 
+                    color: '#17a2b8',
+                    marginBottom: '8px',
+                    textAlign: 'center'
+                  }}>
+                    🔵 Update All Helpdesk Capacities
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={bulkCapacityHelpdesk}
+                      onChange={(e) => setBulkCapacityHelpdesk(parseInt(e.target.value) || 1)}
+                      style={{ 
+                        width: '70px',
+                        height: '36px',
+                        border: '2px solid #17a2b8',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        backgroundColor: 'white'
+                      }}
+                    />
+                    <button
+                      onClick={() => updateAllCapacities('HELPDESK', bulkCapacityHelpdesk)}
+                      disabled={loading}
+                      style={{
+                        flex: 1,
+                        height: '36px',
+                        backgroundColor: '#17a2b8',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        opacity: loading ? 0.6 : 1
+                      }}
+                    >
+                      {loading ? 'Updating...' : 'Update All Helpdesk'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ 
+                marginTop: '12px', 
+                fontSize: '12px', 
+                color: '#666',
+                textAlign: 'center'
+              }}>
+                ⚠️ This will update all 50 slots (5 days × 10 slots) for the selected duty type
+              </div>
+            </div>
+            
+            <h5 style={{ marginBottom: '12px', color: '#495057' }}>Individual Slot Settings</h5>
             
             <div className="timetable-grid">
               {DAY_LABELS.map((dayLabel, dayIndex) => (

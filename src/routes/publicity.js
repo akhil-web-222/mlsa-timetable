@@ -152,6 +152,55 @@ router.put('/admin/capacity', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Bulk update capacity for all slots of a specific duty type (admin only)
+router.put('/admin/capacity/bulk', authenticateAdmin, async (req, res) => {
+  try {
+    const { duty_type, capacity } = req.body;
+    
+    if (!duty_type || !capacity) {
+      return res.status(400).json({ error: 'Missing required fields: duty_type and capacity' });
+    }
+    
+    if (!['C2C', 'HELPDESK'].includes(duty_type)) {
+      return res.status(400).json({ error: 'Duty type must be C2C or HELPDESK' });
+    }
+    
+    if (capacity < 1 || capacity > 50) {
+      return res.status(400).json({ error: 'Capacity must be between 1 and 50' });
+    }
+    
+    // Use MongoDB bulk operations for efficiency
+    const bulkOps = [];
+    
+    // Create bulk operations for all days (1-5) and slots (1-10)
+    for (let day = 1; day <= 5; day++) {
+      for (let slot = 1; slot <= 10; slot++) {
+        bulkOps.push({
+          updateOne: {
+            filter: { day, slot, duty_type },
+            update: { $set: { capacity, updated_at: new Date() } },
+            upsert: true
+          }
+        });
+      }
+    }
+    
+    // Execute bulk operation
+    const result = await SlotCapacity.bulkWrite(bulkOps);
+    
+    res.json({ 
+      message: `Successfully updated all ${duty_type} capacities to ${capacity}`,
+      modified: result.modifiedCount,
+      upserted: result.upsertedCount,
+      total_slots: 50
+    });
+    
+  } catch (error) {
+    console.error('Error bulk updating capacity:', error);
+    res.status(500).json({ error: 'Failed to bulk update capacity' });
+  }
+});
+
 // Get publicity statistics (admin only)
 router.get('/admin/stats', authenticateAdmin, async (req, res) => {
   try {
