@@ -204,8 +204,10 @@ router.patch('/members/:id/reset', authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Member not found' });
     }
 
-    // Clear all free slots
+    // Clear all free slots and publicity data
     member.free_slots = [];
+    member.publicity_duty_preferences = new Map();
+    member.publicity_slots = [];
     member.locked = false;
     member.last_updated = new Date();
     member.audit.push({

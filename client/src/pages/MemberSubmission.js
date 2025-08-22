@@ -10,13 +10,17 @@ const MemberSubmission = () => {
     name: '',
     reg_number: '',
     email: '',
-    free_slots: []
+    free_slots: [],
+    publicity_duty_preferences: {},
+    publicity_slots: []
   });
   const [loading, setLoading] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [isUpdate, setIsUpdate] = useState(false);
+  const [slotAvailability, setSlotAvailability] = useState({});
+  const [publicityValidationErrors, setPublicityValidationErrors] = useState({});
 
   // Auto-load data when coming from status page with reg parameter or initial details
   useEffect(() => {
@@ -41,7 +45,20 @@ const MemberSubmission = () => {
         setMessageType('info');
       }
     }
+    
+    // Load slot availability on component mount
+    loadSlotAvailability();
   }, [searchParams]);
+
+  // Load slot availability
+  const loadSlotAvailability = async () => {
+    try {
+      const response = await api.get('/publicity/availability');
+      setSlotAvailability(response.data);
+    } catch (error) {
+      console.error('Error loading slot availability:', error);
+    }
+  };
 
   // Function to load member data
   const loadMemberData = async (regNumber) => {
@@ -62,7 +79,9 @@ const MemberSubmission = () => {
         ...prev,
         name: memberData.name,
         email: memberData.email,
-        free_slots: memberData.free_slots || []
+        free_slots: memberData.free_slots || [],
+        publicity_duty_preferences: memberData.publicity_duty_preferences || {},
+        publicity_slots: memberData.publicity_slots || []
       }));
       
       setIsUpdate(true);
@@ -106,11 +125,82 @@ const MemberSubmission = () => {
         ? [...prev.free_slots, { day, slot }]
         : prev.free_slots.filter(s => !(s.day === day && s.slot === slot));
       
+      // Update publicity slots - get duty type preference (default to C2C if not set)
+      const dayPreference = prev.publicity_duty_preferences[day] || 'C2C';
+      let newPublicitySlots = prev.publicity_slots;
+      
+      if (checked) {
+        // Add publicity slot
+        newPublicitySlots = [...prev.publicity_slots, { day, slot, duty_type: dayPreference }];
+      } else {
+        // Remove publicity slot
+        newPublicitySlots = prev.publicity_slots.filter(s => !(s.day === day && s.slot === slot));
+      }
+      
       return {
         ...prev,
-        free_slots: newSlots
+        free_slots: newSlots,
+        publicity_slots: newPublicitySlots
       };
     });
+  };
+
+  const handlePublicityPreferenceChange = (day, preference) => {
+    setFormData(prev => ({
+      ...prev,
+      publicity_duty_preferences: {
+        ...prev.publicity_duty_preferences,
+        [day]: preference
+      }
+    }));
+    
+    // Update publicity slots based on preference and selected free slots
+    updatePublicitySlots(day, preference);
+  };
+
+  const updatePublicitySlots = (day, preference) => {
+    setFormData(prev => {
+      // Get free slots for this day
+      const dayFreeSlots = prev.free_slots.filter(slot => slot.day === day);
+      
+      // Create publicity slots for this day with the selected duty type
+      const newPublicitySlots = dayFreeSlots.map(slot => ({
+        day: slot.day,
+        slot: slot.slot,
+        duty_type: preference
+      }));
+
+      return {
+        ...prev,
+        publicity_slots: [
+          ...prev.publicity_slots.filter(slot => slot.day !== day),
+          ...newPublicitySlots
+        ]
+      };
+    });
+  };
+
+  const validatePublicityDuty = () => {
+    const errors = {};
+    
+    // Check each day order for minimum 2 slots
+    for (let day = 1; day <= 5; day++) {
+      const dayPublicitySlots = formData.publicity_slots.filter(slot => slot.day === day);
+      if (dayPublicitySlots.length > 0 && dayPublicitySlots.length < 2) {
+        const dutyType = formData.publicity_duty_preferences[day] || 'C2C';
+        errors[day] = `Min 2 slots required for ${dutyType}`;
+      }
+    }
+    
+    setPublicityValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const getSlotAvailabilityInfo = (day, slot, dutyType) => {
+    if (!slotAvailability[day] || !slotAvailability[day][slot] || !slotAvailability[day][slot][dutyType]) {
+      return { capacity: 5, used: 0, available: 5 };
+    }
+    return slotAvailability[day][slot][dutyType];
   };
 
   const isSlotSelected = (day, slot) => {
@@ -144,6 +234,13 @@ const MemberSubmission = () => {
     
     if (formData.free_slots.length === 0) {
       setMessage('Please select at least one free slot');
+      setMessageType('error');
+      return false;
+    }
+
+    // Validate publicity duty requirements
+    if (!validatePublicityDuty()) {
+      setMessage('Please fix publicity duty validation errors shown below');
       setMessageType('error');
       return false;
     }
@@ -277,8 +374,46 @@ const MemberSubmission = () => {
               {DAY_LABELS.map((dayLabel, dayIndex) => (
                 <div key={dayIndex} className="day-column">
                   <div className="day-title">{dayLabel}</div>
+                  
+                  {/* Publicity Duty Preference for this day */}
+                  <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', display: 'block' }}>
+                      Publicity Duty:
+                    </label>
+                    <select
+                      value={formData.publicity_duty_preferences[dayIndex + 1] || 'C2C'}
+                      onChange={(e) => handlePublicityPreferenceChange(dayIndex + 1, e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '4px', 
+                        fontSize: '12px',
+                        border: publicityValidationErrors[dayIndex + 1] ? '2px solid #dc3545' : '1px solid #ddd',
+                        borderRadius: '3px',
+                        backgroundColor: publicityValidationErrors[dayIndex + 1] ? '#fff5f5' : 'white'
+                      }}
+                    >
+                      <option value="C2C">C2C</option>
+                      <option value="HELPDESK">Helpdesk</option>
+                    </select>
+                    {publicityValidationErrors[dayIndex + 1] && (
+                      <div style={{ color: '#dc3545', fontSize: '10px', marginTop: '2px' }}>
+                        {publicityValidationErrors[dayIndex + 1]}
+                      </div>
+                    )}
+                    
+                    {/* Show availability info for selected duty type */}
+                    {formData.publicity_duty_preferences[dayIndex + 1] && (
+                      <div style={{ fontSize: '10px', marginTop: '4px', color: '#666' }}>
+                        {formData.publicity_duty_preferences[dayIndex + 1]} slots: Min 2 required
+                      </div>
+                    )}
+                  </div>
+
                   {SLOT_LABELS.map((slotLabel, slotIndex) => {
                     const isSelected = isSlotSelected(dayIndex + 1, slotIndex + 1);
+                    const dutyType = formData.publicity_duty_preferences[dayIndex + 1] || 'C2C';
+                    const availability = getSlotAvailabilityInfo(dayIndex + 1, slotIndex + 1, dutyType);
+                    
                     return (
                       <div 
                         key={slotIndex} 
@@ -300,6 +435,11 @@ const MemberSubmission = () => {
                           Slot {slotIndex + 1}<br/>
                           <small>{slotLabel}</small>
                           {isSelected && <span style={{ color: '#28a745', fontSize: '12px' }}> ✓</span>}
+                          
+                          {/* Show availability for this slot */}
+                          <div style={{ fontSize: '10px', color: availability.available > 0 ? '#28a745' : '#dc3545' }}>
+                            {dutyType}: {availability.used}/{availability.capacity}
+                          </div>
                         </label>
                       </div>
                     );
@@ -330,10 +470,13 @@ const MemberSubmission = () => {
                     name: '',
                     reg_number: '',
                     email: '',
-                    free_slots: []
+                    free_slots: [],
+                    publicity_duty_preferences: {},
+                    publicity_slots: []
                   });
                   setIsUpdate(false);
                   setMessage('');
+                  setPublicityValidationErrors({});
                 }}
                 style={{ marginLeft: '12px' }}
               >

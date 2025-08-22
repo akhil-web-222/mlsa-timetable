@@ -9,7 +9,20 @@ const memberSubmitSchema = Joi.object({
       day: Joi.number().integer().min(1).max(5).required(),
       slot: Joi.number().integer().min(1).max(10).required()
     })
-  ).unique((a, b) => a.day === b.day && a.slot === b.slot).required()
+  ).unique((a, b) => a.day === b.day && a.slot === b.slot).required(),
+  // Publicity duty preferences per Day Order
+  publicity_duty_preferences: Joi.object().pattern(
+    /^[1-5]$/, // Day Order keys (1-5)
+    Joi.string().valid('C2C', 'HELPDESK')
+  ).optional(),
+  // Assigned publicity slots
+  publicity_slots: Joi.array().items(
+    Joi.object({
+      day: Joi.number().integer().min(1).max(5).required(),
+      slot: Joi.number().integer().min(1).max(10).required(),
+      duty_type: Joi.string().valid('C2C', 'HELPDESK').required()
+    })
+  ).unique((a, b) => a.day === b.day && a.slot === b.slot).optional()
 });
 
 const adminLoginSchema = Joi.object({

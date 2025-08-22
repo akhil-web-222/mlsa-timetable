@@ -1,5 +1,6 @@
 const express = require('express');
 const Member = require('../models/Member');
+const SlotCapacity = require('../models/SlotCapacity');
 const { memberSubmitSchema } = require('../utils/validation');
 const router = express.Router();
 
@@ -11,7 +12,21 @@ router.post('/submit', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { name, reg_number, email, free_slots } = value;
+    const { name, reg_number, email, free_slots, publicity_duty_preferences, publicity_slots } = value;
+
+    // Validate publicity slots if provided
+    if (publicity_slots && publicity_slots.length > 0) {
+      // Check capacity constraints
+      for (const slot of publicity_slots) {
+        const { day, slot: slotNum, duty_type } = slot;
+        const availability = await SlotCapacity.getAvailability(day, slotNum, duty_type);
+        if (availability.available <= 0) {
+          return res.status(400).json({ 
+            error: `No available capacity for ${duty_type} on Day ${day}, Slot ${slotNum}` 
+          });
+        }
+      }
+    }
 
     // Check if member already exists
     let member = await Member.findOne({ 
@@ -29,7 +44,11 @@ router.post('/submit', async (req, res) => {
       by: 'member',
       meta: { 
         previous_slots: member ? member.free_slots.length : 0,
-        new_slots: free_slots.length 
+        new_slots: free_slots.length,
+        publicity_changes: member ? {
+          previous_publicity_slots: member.publicity_slots ? member.publicity_slots.length : 0,
+          new_publicity_slots: publicity_slots ? publicity_slots.length : 0
+        } : null
       }
     };
 
@@ -37,6 +56,12 @@ router.post('/submit', async (req, res) => {
       // Update existing member
       member.name = name;
       member.free_slots = free_slots;
+      if (publicity_duty_preferences) {
+        member.publicity_duty_preferences = new Map(Object.entries(publicity_duty_preferences));
+      }
+      if (publicity_slots) {
+        member.publicity_slots = publicity_slots;
+      }
       member.last_updated = new Date();
       member.changes_count += 1;
       member.audit.push(auditEntry);
@@ -48,6 +73,8 @@ router.post('/submit', async (req, res) => {
         reg_number,
         email,
         free_slots,
+        publicity_duty_preferences: publicity_duty_preferences ? new Map(Object.entries(publicity_duty_preferences)) : new Map(),
+        publicity_slots: publicity_slots || [],
         changes_count: 1,
         audit: [auditEntry]
       });
@@ -61,6 +88,8 @@ router.post('/submit', async (req, res) => {
         reg_number: member.reg_number,
         email: member.email,
         free_slots: member.free_slots,
+        publicity_duty_preferences: Object.fromEntries(member.publicity_duty_preferences || new Map()),
+        publicity_slots: member.publicity_slots || [],
         locked: member.locked,
         last_updated: member.last_updated
       }
@@ -93,6 +122,8 @@ router.get('/status/:reg_number', async (req, res) => {
       reg_number: member.reg_number,
       email: member.email,
       free_slots: member.free_slots,
+      publicity_duty_preferences: Object.fromEntries(member.publicity_duty_preferences || new Map()),
+      publicity_slots: member.publicity_slots || [],
       locked: member.locked,
       last_updated: member.last_updated,
       changes_count: member.changes_count
