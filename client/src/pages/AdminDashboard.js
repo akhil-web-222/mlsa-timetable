@@ -23,6 +23,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [publicityCapacities, setPublicityCapacities] = useState([]);
+  const [publicityStats, setPublicityStats] = useState({});
 
   const navigate = useNavigate();
   const { admin, logout } = useAuthStore();
@@ -32,6 +34,8 @@ const AdminDashboard = () => {
       fetchStats();
     } else if (activeTab === 'members') {
       fetchMembers();
+    } else if (activeTab === 'publicity') {
+      fetchPublicityData();
     }
   }, [activeTab, filters, pagination.current_page]);
 
@@ -69,6 +73,39 @@ const AdminDashboard = () => {
       showMessage('Failed to fetch members', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPublicityData = async () => {
+    try {
+      setLoading(true);
+      const [capacitiesResponse, statsResponse] = await Promise.all([
+        api.get('/publicity/admin/capacity'),
+        api.get('/publicity/admin/stats')
+      ]);
+      setPublicityCapacities(capacitiesResponse.data);
+      setPublicityStats(statsResponse.data);
+    } catch (error) {
+      console.error('Failed to fetch publicity data:', error);
+      showMessage('Failed to fetch publicity data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateCapacity = async (day, slot, dutyType, newCapacity) => {
+    try {
+      await api.put('/publicity/admin/capacity', {
+        day,
+        slot,
+        duty_type: dutyType,
+        capacity: newCapacity
+      });
+      showMessage('Capacity updated successfully', 'success');
+      fetchPublicityData(); // Refresh data
+    } catch (error) {
+      console.error('Failed to update capacity:', error);
+      showMessage('Failed to update capacity', 'error');
     }
   };
 
@@ -406,6 +443,201 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const renderPublicity = () => (
+    <div>
+      <h3>Publicity Duty Capacity Management</h3>
+      
+      {loading ? (
+        <div className="loading">
+          <div className="spinner"></div>
+        </div>
+      ) : (
+        <>
+          {/* Publicity Statistics */}
+          <div className="grid grid-3" style={{ marginBottom: '24px' }}>
+            <div className="card">
+              <h4>Total with Publicity</h4>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#007bff' }}>
+                {publicityStats.total_members_with_publicity || 0}
+              </div>
+            </div>
+            
+            <div className="card">
+              <h4>C2C Assignments</h4>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#28a745' }}>
+                {publicityStats.by_duty_type?.C2C || 0}
+              </div>
+            </div>
+            
+            <div className="card">
+              <h4>Helpdesk Assignments</h4>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#17a2b8' }}>
+                {publicityStats.by_duty_type?.HELPDESK || 0}
+              </div>
+            </div>
+          </div>
+
+          {/* Capacity Management Grid */}
+          <div className="card">
+            <h4>Slot Capacity Settings</h4>
+            <p style={{ color: '#666', marginBottom: '8px', fontSize: '14px' }}>
+              <strong>Instructions:</strong> Each slot can be configured with different capacity limits for C2C and Helpdesk duties.
+            </p>
+            <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>
+              • <strong>Used:</strong> Current number of students assigned<br/>
+              • <strong>Capacity:</strong> Maximum number of students allowed (click to edit)<br/>
+              • Default capacity is 5 per duty type per slot
+            </p>
+            
+            <div className="timetable-grid">
+              {DAY_LABELS.map((dayLabel, dayIndex) => (
+                <div key={dayIndex} className="day-column">
+                  <div className="day-title">{dayLabel}</div>
+                  {SLOT_LABELS.map((slotLabel, slotIndex) => {
+                    const day = dayIndex + 1;
+                    const slot = slotIndex + 1;
+                    
+                    // Find existing capacities for this slot
+                    const c2cCapacity = publicityCapacities.find(c => 
+                      c.day === day && c.slot === slot && c.duty_type === 'C2C'
+                    );
+                    const helpdeskCapacity = publicityCapacities.find(c => 
+                      c.day === day && c.slot === slot && c.duty_type === 'HELPDESK'
+                    );
+                    
+                    // Get current usage from stats
+                    const c2cUsed = publicityStats.slot_usage?.[day]?.[slot]?.C2C || 0;
+                    const helpdeskUsed = publicityStats.slot_usage?.[day]?.[slot]?.HELPDESK || 0;
+                    
+                    return (
+                      <div key={slotIndex} className="slot-capacity-admin">
+                        <div style={{ 
+                          fontSize: '14px', 
+                          fontWeight: 'bold', 
+                          marginBottom: '12px',
+                          textAlign: 'center',
+                          padding: '8px',
+                          backgroundColor: '#f8f9fa',
+                          borderRadius: '4px'
+                        }}>
+                          Slot {slot}<br/>
+                          <small style={{ fontSize: '12px', color: '#666' }}>{slotLabel}</small>
+                        </div>
+                        
+                        {/* C2C Capacity */}
+                        <div style={{ 
+                          marginBottom: '12px', 
+                          padding: '12px', 
+                          backgroundColor: '#e8f5e8', 
+                          borderRadius: '6px',
+                          border: '1px solid #d1e7dd'
+                        }}>
+                          <div style={{ 
+                            fontSize: '13px', 
+                            fontWeight: 'bold', 
+                            color: '#28a745',
+                            marginBottom: '8px',
+                            textAlign: 'center'
+                          }}>
+                            C2C
+                          </div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            fontSize: '12px',
+                            marginBottom: '6px'
+                          }}>
+                            <span>Used: <strong>{c2cUsed}</strong></span>
+                          </div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between'
+                          }}>
+                            <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Capacity:</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="50"
+                              value={c2cCapacity?.capacity || 5}
+                              onChange={(e) => updateCapacity(day, slot, 'C2C', parseInt(e.target.value))}
+                              style={{ 
+                                width: '60px', 
+                                height: '32px',
+                                border: '2px solid #28a745', 
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                textAlign: 'center',
+                                backgroundColor: 'white'
+                              }}
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Helpdesk Capacity */}
+                        <div style={{ 
+                          padding: '12px', 
+                          backgroundColor: '#e1f7fe', 
+                          borderRadius: '6px',
+                          border: '1px solid #b8daff'
+                        }}>
+                          <div style={{ 
+                            fontSize: '13px', 
+                            fontWeight: 'bold', 
+                            color: '#17a2b8',
+                            marginBottom: '8px',
+                            textAlign: 'center'
+                          }}>
+                            Helpdesk
+                          </div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            fontSize: '12px',
+                            marginBottom: '6px'
+                          }}>
+                            <span>Used: <strong>{helpdeskUsed}</strong></span>
+                          </div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between'
+                          }}>
+                            <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Capacity:</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="50"
+                              value={helpdeskCapacity?.capacity || 5}
+                              onChange={(e) => updateCapacity(day, slot, 'HELPDESK', parseInt(e.target.value))}
+                              style={{ 
+                                width: '60px', 
+                                height: '32px',
+                                border: '2px solid #17a2b8', 
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                textAlign: 'center',
+                                backgroundColor: 'white'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="container">
       <div className="navbar">
@@ -440,10 +672,17 @@ const AdminDashboard = () => {
           >
             Members
           </button>
+          <button
+            className={`btn ${activeTab === 'publicity' ? '' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('publicity')}
+          >
+            Publicity Capacity
+          </button>
         </div>
 
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'members' && renderMembers()}
+        {activeTab === 'publicity' && renderPublicity()}
       </div>
     </div>
   );

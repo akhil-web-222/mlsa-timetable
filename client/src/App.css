@@ -654,3 +654,71 @@ input:focus, select:focus, textarea:focus {
     max-width: 250px;
   }
 }
+
+/* Publicity Capacity Management Styles */
+.slot-capacity {
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin: 2px;
+  border-radius: 4px;
+  background-color: white;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.slot-capacity-admin {
+  border: 2px solid #dee2e6;
+  padding: 12px;
+  margin: 4px;
+  border-radius: 8px;
+  background-color: white;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: border-color 0.2s ease;
+}
+
+.slot-capacity-admin:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.slot-capacity-admin input[type="number"] {
+  transition: all 0.2s ease;
+}
+
+.slot-capacity-admin input[type="number"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  border-color: #007bff !important;
+}
+
+.slot-capacity-admin input[type="number"]:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.slot-checkbox.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  background-color: #f8f9fa !important;
+}
+
+.slot-checkbox.disabled:hover {
+  background-color: #f8f9fa !important;
+}
+
+.slot-checkbox.disabled input {
+  cursor: not-allowed;
+}
+
+.slot-checkbox.disabled label {
+  cursor: not-allowed !important;
+}
+
+/* Enhance existing slot-checkbox for better disabled state */
+.slot-checkbox input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

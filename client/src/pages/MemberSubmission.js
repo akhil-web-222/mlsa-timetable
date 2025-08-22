@@ -413,31 +413,43 @@ const MemberSubmission = () => {
                     const isSelected = isSlotSelected(dayIndex + 1, slotIndex + 1);
                     const dutyType = formData.publicity_duty_preferences[dayIndex + 1] || 'C2C';
                     const availability = getSlotAvailabilityInfo(dayIndex + 1, slotIndex + 1, dutyType);
+                    const isSlotFull = availability.available <= 0 && !isSelected;
                     
                     return (
                       <div 
                         key={slotIndex} 
-                        className={`slot-checkbox ${isSelected ? 'selected' : ''}`}
-                        onClick={() => handleSlotChange(
-                          dayIndex + 1, 
-                          slotIndex + 1, 
-                          !isSelected
-                        )}
+                        className={`slot-checkbox ${isSelected ? 'selected' : ''} ${isSlotFull ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (!isSlotFull) {
+                            handleSlotChange(dayIndex + 1, slotIndex + 1, !isSelected);
+                          }
+                        }}
+                        style={{
+                          opacity: isSlotFull ? 0.5 : 1,
+                          cursor: isSlotFull ? 'not-allowed' : 'pointer',
+                          backgroundColor: isSlotFull ? '#f8f9fa' : (isSelected ? '#d4edda' : 'white')
+                        }}
                       >
                         <input
                           type="checkbox"
                           id={`slot-${dayIndex + 1}-${slotIndex + 1}`}
                           checked={isSelected}
+                          disabled={isSlotFull}
                           onChange={() => {}} // Handled by div onClick
                           onClick={(e) => e.stopPropagation()} // Prevent double toggle
                         />
-                        <label htmlFor={`slot-${dayIndex + 1}-${slotIndex + 1}`}>
+                        <label htmlFor={`slot-${dayIndex + 1}-${slotIndex + 1}`} style={{ cursor: isSlotFull ? 'not-allowed' : 'pointer' }}>
                           Slot {slotIndex + 1}<br/>
                           <small>{slotLabel}</small>
                           {isSelected && <span style={{ color: '#28a745', fontSize: '12px' }}> ✓</span>}
+                          {isSlotFull && <span style={{ color: '#dc3545', fontSize: '12px' }}> FULL</span>}
                           
                           {/* Show availability for this slot */}
-                          <div style={{ fontSize: '10px', color: availability.available > 0 ? '#28a745' : '#dc3545' }}>
+                          <div style={{ 
+                            fontSize: '10px', 
+                            color: isSlotFull ? '#dc3545' : (availability.available < 3 ? '#ff8c00' : '#28a745'),
+                            fontWeight: 'bold'
+                          }}>
                             {dutyType}: {availability.used}/{availability.capacity}
                           </div>
                         </label>
