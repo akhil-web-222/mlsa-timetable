@@ -17,7 +17,7 @@ app.use(helmet({
 const corsDisabled = process.env.CORS_DISABLED === 'true';
 
 if (!corsDisabled) {
-  const corsOriginRaw = process.env.CORS_ORIGIN || 'http://localhost:3000';
+  const corsOriginRaw = (process.env.CORS_ORIGIN || '*').trim();
   const allowAllOrigins = corsOriginRaw === '*';
   const allowedOrigins = corsOriginRaw
     .split(',')
@@ -31,7 +31,7 @@ if (!corsDisabled) {
           if (!origin || allowedOrigins.includes(origin)) {
             return callback(null, true);
           }
-          return callback(new Error('CORS origin not allowed'));
+          return callback(null, false);
         },
     credentials: !allowAllOrigins
   }));
