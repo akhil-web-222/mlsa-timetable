@@ -7,11 +7,7 @@ const router = express.Router();
 // Get availability for all days (public endpoint)
 router.get('/availability', async (req, res) => {
   try {
-    const availability = {};
-    
-    for (let day = 1; day <= 5; day++) {
-      availability[day] = await SlotCapacity.getDayAvailability(day);
-    }
+    const availability = await SlotCapacity.getAvailabilityMap([1, 2, 3, 4, 5]);
     
     res.json(availability);
   } catch (error) {
