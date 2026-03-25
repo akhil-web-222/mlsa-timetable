@@ -303,25 +303,39 @@ router.get('/export/csv', authenticateAdmin, async (req, res) => {
 // Get statistics
 router.get('/stats', authenticateAdmin, async (req, res) => {
   try {
-    const [totalMembers, lockedMembers, recentSubmissions] = await Promise.all([
+    const [totalMembers, lockedMembers, recentSubmissions, slotCounts] = await Promise.all([
       Member.countDocuments({}),
       Member.countDocuments({ locked: true }),
       Member.countDocuments({ 
         last_updated: { 
           $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) 
         } 
-      })
+      }),
+      Member.aggregate([
+        { $unwind: '$free_slots' },
+        {
+          $group: {
+            _id: {
+              day: '$free_slots.day',
+              slot: '$free_slots.slot'
+            },
+            count: { $sum: 1 }
+          }
+        }
+      ])
     ]);
 
-    // Slot availability statistics
+    const slotCountMap = new Map();
+    for (const row of slotCounts) {
+      slotCountMap.set(`${row._id.day}:${row._id.slot}`, row.count);
+    }
+
+    // Slot availability statistics (filled with zero by default)
     const slotStats = {};
     for (let day = 1; day <= 5; day++) {
       slotStats[`day${day}`] = {};
       for (let slot = 1; slot <= 10; slot++) {
-        const count = await Member.countDocuments({
-          free_slots: { $elemMatch: { day, slot } }
-        });
-        slotStats[`day${day}`][`slot${slot}`] = count;
+        slotStats[`day${day}`][`slot${slot}`] = slotCountMap.get(`${day}:${slot}`) || 0;
       }
     }
 
